@@ -78,7 +78,8 @@ def calibration(objpoints, imgpoints, img_shape, yaml_path):
         D,
         rvecs,
         tvecs,
-        None,None)
+        flags=cv2.fisheye.CALIB_FIX_SKEW | cv2.fisheye.CALIB_RECOMPUTE_EXTRINSIC,
+        criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 1e-6),)
     
     res["internal_reference"] = K.tolist()
     res["distortion"] = D.tolist()
@@ -96,12 +97,18 @@ def load_interparamter(yaml_path):
 
 
 def test_single_img(img_path, yaml_path):
-    K, D = load_interparamter('./camera_parameter.yaml')
+    K, D = load_interparamter(yaml_path)
 
     img = cv2.imread(img_path)
+  
+    P = K
+    scale = [[1.0, 1.0, 1.0],[1.0, 1.0, 1.0],[1.0, 1.0, 1.0]]
+    P = P*scale
+    print(K, P)
+
 
     DIM = (1920,1080)
-    map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, DIM, cv2.CV_16SC2)
+    map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), P, DIM, cv2.CV_16SC2)
     undistorted_img = cv2.remap(img, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
     cv2.imshow('window', undistorted_img)
@@ -176,7 +183,7 @@ def warphomography(img):
 if __name__ == '__main__':
     # main(6,9,15, Lambda=0.12)
 
-    test_single_img('./10.jpg', './camera_parameter.yaml')
+    test_single_img('./10.jpg', './camera_parameter2.yaml')
 
     # calibrate_video('./camera_parameter.yaml', H=True)
 
